@@ -16,10 +16,13 @@ const SetEditorStatePlugin = () => {
   const content = useSelector((state) => state.notes.currentNote?.content);
 
   useEffect(() => {
-    if (content) {
-      const jsonContent = JSON.stringify(content);
-      const parsedContent = editor.parseEditorState(jsonContent);
+    if (!content) return;
+
+    try {
+      const parsedContent = editor.parseEditorState(content);
       editor.setEditorState(parsedContent);
+    } catch (err) {
+      console.error("Failed to parse Lexical content:", err);
     }
   }, [content, editor]);
 
