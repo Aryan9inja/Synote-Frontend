@@ -1,11 +1,18 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getNote, deleteNote } from "../../store/notesSlice.js";
 import ReadOnlyEditor from "../richTextEditor/readOnlyEditor.jsx";
 import { FiArrowLeft, FiEdit, FiTrash2 } from "react-icons/fi";
+import { getNoteSummary } from "../../services/aiService.js";
+import extractTextFromLexicalJSON from "../../utils/plainTextFromLexical.js";
+import { createEditor } from "lexical";
 
 function FullNote() {
+  const [showSummary, setShowSummary] = useState(false);
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  const [summary, setSummary] = useState(null);
+
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -31,6 +38,35 @@ function FullNote() {
     navigate("/notes");
   };
 
+  const handleSummary = async () => {
+    if (showSummary) {
+      setShowSummary(false);
+      return;
+    }
+
+    setLoadingSummary(true);
+    setSummary(null);
+
+    try {
+      const plainText = extractTextFromLexicalJSON(note.content);
+      console.log(plainText);
+      const response = await getNoteSummary({
+        noteId: note._id,
+        title: note.title,
+        content: plainText,
+      });
+
+      setSummary(response.data.summary);
+      setShowSummary(true);
+    } catch (error) {
+      console.error("AI Summary Error:", error.message);
+      setSummary("Failed to generate summary.");
+      setShowSummary(true);
+    } finally {
+      setLoadingSummary(false);
+    }
+  };
+
   if (!note) {
     return <p className="text-center mt-10 text-gray-500">Loading note...</p>;
   }
@@ -48,8 +84,24 @@ function FullNote() {
           <ReadOnlyEditor content={note.content} />
         </div>
 
+        {/* Summary Block */}
+        {showSummary && (
+          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900 text-blue-900 dark:text-blue-100 border border-blue-200 dark:border-blue-700 rounded-md shadow-sm">
+            <h2 className="text-xl font-semibold mb-2">AI Summary</h2>
+            {loadingSummary ? (
+              <div className="animate-pulse space-y-2">
+                <div className="h-4 bg-blue-200 dark:bg-blue-700 rounded w-3/4"></div>
+                <div className="h-4 bg-blue-200 dark:bg-blue-700 rounded w-2/3"></div>
+                <div className="h-4 bg-blue-200 dark:bg-blue-700 rounded w-1/2"></div>
+              </div>
+            ) : (
+              <p className="whitespace-pre-wrap">{summary}</p>
+            )}
+          </div>
+        )}
+
         {/* Buttons */}
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="mt-6 flex flex-wrap justify-end gap-3">
           <button
             onClick={handleBack}
             className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
@@ -67,6 +119,22 @@ function FullNote() {
             className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
           >
             <FiTrash2 /> Delete
+          </button>
+          <button
+            onClick={handleSummary}
+            disabled={loadingSummary}
+            className={`flex items-center gap-2 px-4 py-2 text-white rounded transition-colors ${
+              loadingSummary
+                ? "bg-green-400 cursor-not-allowed"
+                : "bg-green-600 hover:bg-green-700"
+            }`}
+          >
+            🧠{" "}
+            {showSummary
+              ? "Hide Summary"
+              : loadingSummary
+              ? "Summarizing..."
+              : "Summarize"}
           </button>
         </div>
       </div>
