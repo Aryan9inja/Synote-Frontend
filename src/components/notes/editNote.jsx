@@ -34,7 +34,8 @@ function EditNote() {
   const handleSave = async (e) => {
     e.preventDefault();
     try {
-      await dispatch(updateNote({ id, title, content })).unwrap();
+      const updatedNote = { title, content };
+      await dispatch(updateNote({ noteId: id, updatedNote }));
       navigate("/notes");
     } catch (err) {
       console.error("Failed to update note:", err);
