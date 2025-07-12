@@ -8,6 +8,7 @@ import {
 } from "../../store/tasksSlice.js";
 import { FiEdit, FiTrash, FiPlus, FiCheck, FiX } from "react-icons/fi";
 import { Link } from "react-router-dom";
+import TaskSummary from "./taskSummary.jsx";
 
 function TaskList() {
   const [showForm, setShowForm] = useState(false);
@@ -157,6 +158,7 @@ function TaskList() {
                 >
                   View Subtasks
                 </Link>
+                <TaskSummary taskId={task._id} />
               </div>
               <div className="flex gap-4">
                 <button
