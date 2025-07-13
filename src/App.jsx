@@ -22,8 +22,8 @@ function App() {
   useEffect(() => {
     const rehydrateAuth = async () => {
       try {
-        await dispatch(refreshToken()).unwrap();
-        await dispatch(fetchCurrentUser());
+        await dispatch(refreshToken()).unwrap;
+        dispatch(fetchCurrentUser());
       } catch (err) {
         console.log("Auto Login failed: ", err);
       }
